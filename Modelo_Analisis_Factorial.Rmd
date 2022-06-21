@@ -1,0 +1,73 @@
+---
+title: "Análisis Factorial"
+output: html_document
+---
+
+## 25 Personality items (Dataset)
+
+Se incluyeron 25 elementos de autoinforme de personalidad tomados del International Personality Item Pool (ipip.ori.org) como parte del proyecto de evaluación de personalidad basado en la web de Evaluación de personalidad de apertura sintética (SAPA). Los datos de 2800 sujetos se incluyen aquí como un conjunto de demostración para la construcción de escalas, el análisis factorial y el análisis de la Teoría de Respuesta al Ítem. También se incluyen tres variables demográficas adicionales (sexo, educación y edad).
+
+Los primeros 25 ítems están organizados por cinco factores putativos: Amabilidad, Conciencia, Extraversión, Neuroticismo y Apertura. 
+
+Los datos de los ítems se recopilaron utilizando una escala de respuesta de 6 puntos: 1 Muy inexacto 2 Moderadamente inexacto 3 Ligeramente inexacto 4 Ligeramente exacto 5 Moderadamente exacto 6 Muy exacto
+
+### Paquetes
+```{r}
+library(psych)
+library(GPArotation)
+library(nFactors)
+library(paran)
+```
+### Leemos los datos
+```{r}
+datos <- read.csv("C:/Users/Eduardo/Desktop/Semestre 2022A/Análisis Multivariado/bfi.csv")
+head(datos)
+``` 
+Eliminamos las filas que contengan al menos un NA y calculamos la matriz de correlación
+```{r}
+data=datos[,1:27]
+data=na.omit(data)
+R<-cor(data[,2:27],use="complete.obs",method="pearson")
+head(R)
+```
+### Medidas de ajuste o de adecuacion muestral
+```{r}
+cortest.bartlett(R,n=95)
+```
+Dado que el p-value de la prueba de esfericidad de Bartlett es menor que 0.05, el conjunto de datos es adecuado para una técnica de reducción de datos.
+
+### Prueba de Kaiser-Meyer-Olkin
+```{r}
+KMO(R)
+```
+Se puede observar que la prueba KMO arroja valores > 0.7, esto quiere decir que el test es medianamente bueno, cabe resaltar que este test relaciona los coeficientes de correlación observados entre las variables. Cuanto más cerca de 1 tenga el valor, la relación entre las variables es alta.
+
+### Determinación de los factores
+```{r}
+paran(data[2:27], iterations=5000,graph=TRUE,color=FALSE)
+```
+
+### Test de Barlett (Factores a retener mediante Bartlett, Anderson y Lawley)
+
+```{r}
+nBartlett(R, alpha=0.01, N=95, details=TRUE)
+```
+Como podemos observar, son aceptables de 2 a 6 factores, es por esto que correremos el código para cada uno y nos fijaremos en el TLI que mide que tan bueno es el modelo y el BIC (usado para comparar modelos)
+
+```{r}
+fit1.pa<-fa(data[,2:27],nfactors=2,fm="pa",rotate="varimax",scores="regression")
+fa.sort(fit1.pa)
+fit2.pa<-fa(data[,2:27],nfactors=3,fm="pa",rotate="varimax",scores="regression")
+fa.sort(fit2.pa)
+fit3.pa<-fa(data[,2:27],nfactors=4,fm="pa",rotate="varimax",scores="regression")
+fa.sort(fit3.pa)
+fit4.pa<-fa(data[,2:27],nfactors=5,fm="pa",rotate="varimax",scores="regression")
+fa.sort(fit4.pa)
+fit5.pa<-fa(data[,2:27],nfactors=6,fm="pa",rotate="varimax",scores="regression")
+fa.sort(fit5.pa)
+```
+Se puede notar que el modelo que tiene mejor TLI (>0.9) y menor BIC es el ultimo, es decir, el que contiene 6 factores, es por eso que elegimos ese ultimo modelo como el adecuado. 
+
+```{r}
+plot(fit5.pa)
+```

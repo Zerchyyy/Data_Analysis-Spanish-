@@ -1,0 +1,71 @@
+---
+title: "Modelo Discriminante Multiple"
+output: html_document
+---
+
+## Dataset
+
+https://stats.oarc.ucla.edu/spss/dae/discriminant-function-analysis/
+
+Una gran compañía aérea internacional ha recopilado datos sobre empleados en tres clasificaciones de trabajo diferentes: 1) personal de servicio al cliente, 2) mecánicos y 3) despachadores. El director de Recursos Humanos quiere saber si estas tres clasificaciones laborales atraen a diferentes tipos de personalidad. A cada empleado se le administra una batería de pruebas psicológicas que incluyen medidas de interés en la actividad al aire libre, sociabilidad y conservadurismo.
+
+El conjunto de datos tiene 244 observaciones en cuatro variables. Las variables psicológicas son intereses exteriores, sociales y conservadores. La variable categórica es tipo de trabajo con tres niveles; 1) servicio al cliente, 2) mecánico y 3) despachador.
+
+Lo que se busca es realizar un modelo para clasificar, dependiendo las variables, a los trabajadores en los 3 grupos que tiene la variables de respuesta.
+
+### Paquetes
+
+```{r}
+library(haven)
+library(readxl)
+library(ggplot2)
+library(MASS)
+library(descr)
+library(biotools)
+library(mvnormtest)
+library(klaR)
+library(ggrepel)
+```
+### Leemos la base de datos
+```{r}
+datos <- read_excel("C:/Users/Zerchyy/Desktop/Semestre 2022A/Multivariado/Scripts/Discrim_.xlsx")
+head(datos)
+```
+### Ejecutamos el análisis discriminante
+```{r}
+fit<-lda(data=datos,job~.)
+head(print(fit))
+```
+
+Podemos observar las probabilidades de pertenencia a los grupos como las medias. Por otro lado observamos los coeficientes de los discriminantes lineales que en este caso existe LD1 y LD2 (dado que hay 3 grupos)
+
+### Graficamos
+
+```{r}
+plot(fit)
+```
+
+### Pertenencia Predicha
+```{r}
+fit.p<-predict(fit)$class
+datos<-data.frame(datos,fit.p)
+```
+### Tabla Cruzada
+```{r}
+CrossTable(datos[,4],datos$fit.p,digits=2,format="SPSS",prop.c=FALSE,prop.chisq =FALSE,prop.t = FALSE,dnn=c("Grupo real","Grupo pronosticado"))
+```
+Lo que se puede apreciar es que el modelo clasifica de buena manera, esto lo podemos notar en la diagonal de la tabla.
+
+### Porcentaje de Clasificaciones Correctas
+```{r}
+1-aer(datos$job, datos$fit.p)
+```
+### MANOVA para significatividad
+```{r}
+fit.manova<-manova(data=datos,cbind(outdoor,social,conservative)~job)
+summary((fit.manova),test="Wilks")
+```
+Dado lo anterior podemos recordar que la prueba realizada nos indica que las medidas de cada variable son distintas en cada grupo, ya que nuestro p-value fue < 0.05, las variables son significativas, por lo que las varianzas son distintas y tiene sentido realizar el análisis discriminante.
+
+### Conclusiones
+Nuestro modelo fue adecuado dado que pasó las pruebas realizadas y al observar la tabla cruzada se puede corroborar que obtiene un buen desempeño a la hora de la clasificación en los grupos.

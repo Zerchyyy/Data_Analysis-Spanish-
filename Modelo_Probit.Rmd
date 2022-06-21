@@ -1,0 +1,64 @@
+---
+title: "Modelo Probit"
+output: html_document
+---
+
+## Breast Cancer Dataset
+https://www.kaggle.com/datasets/merishnasuwal/breast-cancer-prediction-dataset
+
+En todo el mundo, el cáncer de mama es el tipo de cáncer más común en las mujeres y el segundo más alto en términos de tasas de mortalidad. El diagnóstico de cáncer de mama se realiza cuando se encuentra un bulto anormal (a partir de un autoexamen o una radiografía) o se observa una pequeña mota de calcio (en una radiografía). Después de que se encuentre un bulto sospechoso, el médico realizará un diagnóstico para determinar si es canceroso y, de ser así, si se ha diseminado a otras partes del cuerpo.
+
+Este conjunto de datos de cáncer de mama se obtuvo de los Hospitales de la Universidad de Wisconsin, Madison del Dr. William H. Wolberg.
+
+## Atributos
+
+diagnosis: El diagnóstico de tejidos mamarios (1 = maligno, 0 = benigno) donde maligno denota que la enfermedad es dañina
+mean_radius: media de distancias desde el centro hasta los puntos del perímetro
+mean_texture: desviación estándar de los valores de la escala de grises
+mean_perimeter: tamaño medio del tumor central
+mean_area: área media del tumor central
+mean_smoothness: media de variación local en las longitudes de radio
+
+Se quiere predecir la probabilidad de pertenencia sobre si el tumor es maligno o benigno.
+
+### Paquetes
+
+```{r}
+library(DescTools)
+library(gmodels)
+library(Epi)
+library(DescTools)
+```
+
+### Leemos la base de datos
+```{r}
+data<-read.csv("C:/Users/Zerchyy/Desktop/Semestre 2022A/Multivariado/Scripts/Breast_cancer_data.csv")
+head(data)
+```
+
+### Creamos el modelo probit
+```{r}
+probit1 <- glm(diagnosis ~.,data = data, family = binomial(link = "probit"))
+summary(probit1)
+```
+Podemos notar que todas las variables son significativas dado su p-value, tenemos que la devianza nula es 751.44 y la devianza residual es de 168.36, por otro lado el criterio de Akaike es de 180.36 (esto en caso de querer comparar modelos)
+
+### Creación de las probabilidades
+```{r}
+data$probit=6.12410+data$mean_radius*3.53273+data$mean_texture*-0.19781+
+  data$mean_perimeter*-0.33310+data$mean_area*-0.02401+data$mean_smoothness*-63.91200
+```
+
+### Normalizamos y redondeamos a 7 decimales esa columna.
+```{r}
+data$probit_norm<-pnorm(data$probit)
+data$probit_norm<-round(data$probit_norm,7)
+```
+Por lo tanto ya tendriamos creada en la última columna nuestras probabilidades de pertenencia como se muestra a continuación.
+```{r}
+head(data)
+```
+### Gráfica
+```{r}
+plot(sort(data$probit_norm))
+```

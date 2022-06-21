@@ -1,0 +1,96 @@
+---
+title: "Modelo Logit Binomial"
+output: word_document
+---
+
+## Breast Cancer Dataset
+https://www.kaggle.com/datasets/merishnasuwal/breast-cancer-prediction-dataset
+
+En todo el mundo, el cáncer de mama es el tipo de cáncer más común en las mujeres y el segundo más alto en términos de tasas de mortalidad. El diagnóstico de cáncer de mama se realiza cuando se encuentra un bulto anormal (a partir de un autoexamen o una radiografía) o se observa una pequeña mota de calcio (en una radiografía). Después de que se encuentre un bulto sospechoso, el médico realizará un diagnóstico para determinar si es canceroso y, de ser así, si se ha diseminado a otras partes del cuerpo.
+
+Este conjunto de datos de cáncer de mama se obtuvo de los Hospitales de la Universidad de Wisconsin, Madison del Dr. William H. Wolberg.
+
+## Atributos
+
+diagnosis: El diagnóstico de tejidos mamarios (1 = maligno, 0 = benigno) donde maligno denota que la enfermedad es dañina
+mean_radius: media de distancias desde el centro hasta los puntos del perímetro
+mean_texture: desviación estándar de los valores de la escala de grises
+mean_perimeter: tamaño medio del tumor central
+mean_area: área media del tumor central
+mean_smoothness: media de variación local en las longitudes de radio
+
+Se quiere predecir si el tumor es maligno o benigno tomando en consideración las variables anteriormente mencionadas. Se utiliza el modelo logit binomial dado que la variable "diagnosis" solo tiene salidas 0 o 1.
+
+### Paquetes
+
+```{r}
+library(LOGIT)
+library(DescTools)
+library(gmodels)
+library(Epi)
+library(DescTools)
+```
+
+### Leemos la base de datos
+```{r}
+data<-read.csv("C:/Users/Zerchyy/Desktop/Semestre 2022A/Multivariado/Scripts/Breast_cancer_data.csv")
+head(data)
+```
+### Creamos el modelo logit
+```{r}
+fit <- glm(diagnosis~., family=binomial,data=data)
+summary(fit)
+```
+Como podemos observar, todas las variables son estadisticamente significativas dado su p value < 0.05 y en dado caso que quisieramos comparar este modelo con algún otro que contenga la misma variable de respuesta, podríamos utilizar el AIC que en este caso es de 181.22
+
+### Validamos el modelo
+```{r}
+deviance.model <- fit$deviance
+deviance.base <- fit$null.deviance
+chi <- deviance.base-deviance.model
+chi.df <- fit$df.null-fit$df.residual
+sig.chi <- 1-pchisq(chi,df=chi.df)
+sig.chi
+```
+Como sig.chi es < 0.05 podemos decir que nuestro modelo es adecuado.
+
+### Conversión de modelo lineal odd a sus parámetros de la realidad
+```{r}
+toOR(fit)
+```
+### Pruebas de validación del modelo.
+En dado caso de necesitar más pruebas, R nos otorga opciones para realizar lo anterior, tal como se muestra a continuación.
+```{r}
+PseudoR2(fit,"all")
+```
+### Tabla Cruzada
+```{r}
+predict.fit <- fit$fitted.values
+predict.fit[predict.fit>=0.5] <- 1
+predict.fit[predict.fit<0.5] <- 0
+CrossTable(data$diagnosis, predict.fit, prop.chisq=FALSE, prop.c=FALSE, prop.r=FALSE)
+```
+Podemos observar que nuestro modelo da 189 verdaderos negativos y 341 verdaderos positivos, dando solo 23 FP y 16 FN.
+
+### Tabla de Confusión
+```{r}
+confusion_stat(factor(predict.fit),factor(data$diagnosis))
+```
+La tabla de confusión nos arroja una eficacia de 93.14%, una sensibilidad del 89.15% y una especificidad del 95.51%. Esto quiere decir que nuestro modelo es bastante bueno.
+
+### Curva ROC
+```{r}
+ROC(data=data, form=diagnosis~.)
+```
+
+### Conclusiones
+A lo largo de este codigo se puede observar que el modelo es adecuado ya que superó las pruebas aplicadas y basandonos en la curva ROC también se llega a la misma conclusión. 
+
+
+
+
+
+
+
+
+
